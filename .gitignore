@@ -1,0 +1,4 @@
+*.sw?
+*.pyc
+*.mod.js
+secret.json

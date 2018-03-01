@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>Test html</title>
+
+<script src="https://www.gstatic.com/firebasejs/4.8.2/firebase.js"></script>
+<script src="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.js"></script>
+<script>
+firebase.initializeApp({
+    apiKey: "AIzaSyD7co9V40mL1s_Idi_YRLIZ3DJYpowCteA",
+    authDomain: "c76ae698834a18f283a4661548affa.firebaseapp.com",
+    databaseURL: "https://c76ae698834a18f283a4661548affa.firebaseio.com/",
+});
+</script>
+
+
+<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="__javascript__/show_info.js"></script>
+
+</head>
+
+<body>
+
+<div id="login"></div>
+
+<div><span data-auth-display="/admin"></span></div>
+
+<ul data-auth-display-toggle>
+    <li>
+        <a
+            data-auth-display="/public/email/1"
+            data-auth-display-template="mailto:{}"
+            data-auth-display-attribute="href"
+        >
+            <span data-auth-display="/public/email/1"></span>
+        </a>
+    </li>
+    <li>
+        <a
+            data-auth-display="/public/email/2"
+            data-auth-display-template="mailto:{}"
+            data-auth-display-attribute="href"
+        >
+            <span data-auth-display="/public/email/2"></span>
+        </a>
+    </li>
+    <li>
+        <a
+            data-auth-display="/public/email/3"
+            data-auth-display-template="mailto:{}"
+            data-auth-display-attribute="href"
+        >
+            <span data-auth-display="/public/email/3"></span>
+        </a>
+    </li>
+</ul>
+
+<ul data-auth-display-toggle>
+    <li>
+        Telegram: 
+        <a
+            data-auth-display="/public/im/telegram"
+            data-auth-display-template="https://t.me/{}"
+            data-auth-display-attribute="href"
+        >
+            <span
+                data-auth-display="/public/im/telegram"
+                data-auth-display-template="@{}"
+            ></span>
+        </a>
+    </li>
+    <li>
+        WeChat: 
+        <span
+            data-auth-display="/public/im/wechat"
+            data-auth-display-template="@{}"
+        ></span>
+    </li>
+    <li>
+        QQ: 
+        <span
+            data-auth-display="/public/im/qq"
+            data-auth-display-template="@{}"
+        ></span>
+    </li>
+</ul>
+
+
+<ul>
+    <li>
+        Social Network: 
+        <a
+            data-auth-display="/public/sns/twitter"
+            data-auth-display-template="https://twitter.com/{}"
+            data-auth-display-attribute="href"
+        >
+            <span
+                data-auth-display="/public/sns/twitter"
+                data-auth-display-template="@{}"
+            ></span>
+        </a>
+    </li>
+    <li>
+        <a
+            data-auth-display="/public/sns/google"
+            data-auth-display-attribute="href"
+        >Google+</a>
+    </li>
+</ul>
+
+</body>
+
+</html>

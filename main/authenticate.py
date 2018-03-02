@@ -12,6 +12,7 @@ class AuthenticationArea:
 
         self.eventLogin = EventDispatcher()
         self.eventLogout = EventDispatcher()
+        self.eventCredential = EventDispatcher()
         self.resetUI = self.__initializeUI
 
     def getCurrentUser(self):
@@ -41,14 +42,20 @@ class AuthenticationArea:
                 ui = __new__(firebaseui.auth.AuthUI(firebase.auth()))
             uiConfig = {
                 "callbacks": {
-                    "signInSuccess": lambda: self.onAuthStateChanged() and False,
+                    "signInSuccess": self.onSignedIn,
                 },
                 "signInFlow": "popup",
                 "signInOptions": [
                     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                     firebase.auth.FacebookAuthProvider.PROVIDER_ID,
                     firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-                    firebase.auth.GithubAuthProvider.PROVIDER_ID,
+                    {
+                        "provider": firebase.auth.GithubAuthProvider.PROVIDER_ID,
+                        "scopes": [
+                            "user:email",
+                            "read:gpg_key",
+                        ]
+                    },
 #                    firebase.auth.EmailAuthProvider.PROVIDER_ID,
 #                    firebase.auth.PhoneAuthProvider.PROVIDER_ID
                 ],
@@ -68,7 +75,11 @@ class AuthenticationArea:
         self.select().find('[name="logged-in"] button[name="logout"]')\
             .on("click", self.onLogout)
 
-    def onAuthStateChanged(self):
+    async def onSignedIn(self, currentUser, credential):
+        self.eventCredential.call(credential)
+        return False
+
+    def onAuthStateChanged(self, user):
         if self.getCurrentUser():
             console.log("Event: login")
             self.eventLogin.call()

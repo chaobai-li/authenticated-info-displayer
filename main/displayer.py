@@ -32,7 +32,6 @@ class Displayer:
             template = "{}"
         def updater(dbValue):
             text = template.format(dbValue.val())
-            console.log(path, text, targetAttr)
             if targetAttr:
                 S(domObj).attr(targetAttr, text)
             else:

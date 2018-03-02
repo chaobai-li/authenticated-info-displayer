@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-03-01 16:37:29
+// Transcrypt'ed from Python, 2018-03-02 01:02:42
 function show_info () {
     var __symbols__ = ['__py3.6__', '__esv5__'];
     var __all__ = {};
@@ -2219,6 +2219,7 @@ function show_info () {
 							self.__bindEvents ();
 							self.eventLogin = EventDispatcher ();
 							self.eventLogout = EventDispatcher ();
+							self.eventCredential = EventDispatcher ();
 							self.resetUI = self.__initializeUI;
 						});},
 						get getCurrentUser () {return __get__ (this, function (self) {
@@ -2238,9 +2239,7 @@ function show_info () {
 								else {
 									var ui = new firebaseui.auth.AuthUI (firebase.auth ());
 								}
-								var uiConfig = dict ({'callbacks': dict ({'signInSuccess': (function __lambda__ () {
-									return self.onAuthStateChanged () && false;
-								})}), 'signInFlow': 'popup', 'signInOptions': list ([firebase.auth.GoogleAuthProvider.PROVIDER_ID, firebase.auth.FacebookAuthProvider.PROVIDER_ID, firebase.auth.TwitterAuthProvider.PROVIDER_ID, firebase.auth.GithubAuthProvider.PROVIDER_ID])});
+								var uiConfig = dict ({'callbacks': dict ({'signInSuccess': self.onSignedIn}), 'signInFlow': 'popup', 'signInOptions': list ([firebase.auth.GoogleAuthProvider.PROVIDER_ID, firebase.auth.FacebookAuthProvider.PROVIDER_ID, firebase.auth.TwitterAuthProvider.PROVIDER_ID, dict ({'provider': firebase.auth.GithubAuthProvider.PROVIDER_ID, 'scopes': list (['user:email', 'read:gpg_key'])})])});
 								ui.start ('#firebaseui-auth-container', uiConfig);
 								self.select ().find ('[name="not-logged-in"]').show ();
 								self.select ().find ('[name="logged-in"]').hide ();
@@ -2255,7 +2254,11 @@ function show_info () {
 							firebase.auth ().onAuthStateChanged (self.onAuthStateChanged);
 							self.select ().find ('[name="logged-in"] button[name="logout"]').on ('click', self.onLogout);
 						});},
-						get onAuthStateChanged () {return __get__ (this, function (self) {
+						get onSignedIn () {return __get__ (this, async function (self, currentUser, credential) {
+							self.eventCredential.call (credential);
+							return false;
+						});},
+						get onAuthStateChanged () {return __get__ (this, function (self, user) {
 							if (self.getCurrentUser ()) {
 								console.log ('Event: login');
 								self.eventLogin.call ();
@@ -2284,6 +2287,106 @@ function show_info () {
 		}
 	);
 
+	__nest__ (
+		__all__,
+		'main.composer', {
+			__all__: {
+				__inited__: false,
+				__init__: function (__all__) {
+					var __name__ = 'main.composer';
+					var Composer = __class__ ('Composer', [object], {
+						__module__: __name__,
+						CLEARTEXT_MIN_LENGTH: 30,
+						get __init__ () {return __get__ (this, function (self, authenticator, area) {
+							self.$ = (function __lambda__ (i) {
+								return (i ? $ (area).find (i) : $ (area));
+							});
+							self.key = openpgp.key.readArmored (self.$ ().html ()) ['keys'];
+							self.authenticator = authenticator;
+							self.database = firebase.database ();
+							self.__initialize ();
+						});},
+						get __initialize () {return __get__ (this, function (self) {
+							var html = '\n            <div class="composer">\n                <div class="input">\n                    <div>Input anything you want to tell me.</div>\n                    <div><textarea></textarea></div>\n                    <div>\n                        <button class="send">Send</button>\n                        Make sure everything\'s correct -\n                        you will not see above input again!\n                    </div>\n                </div>\n                <div class="output">\n                    <div class="sending">Sending in progress...</div>\n                    <div class="sent">Sent!</div>\n                    <div>\n                        Take note of the key below!\n                        <pre class="user-key"></pre>\n                        Answer will be encrypted with this key!\n                    </div>\n                    <div><textarea readonly></textarea></div>\n                    <div>\n                        <button class="reset">Reset</button>\n                    </div>\n                </div>\n            </div>\n        ';
+							self.$ ().html (html);
+							self.$ ('button.send').click (self.__encryptAndSend);
+							self.$ ('button.reset').click ((function __lambda__ () {
+								return self.__resetComposer (false);
+							}));
+							self.__resetComposer (false);
+							self.authenticator.eventLogin.append ((function __lambda__ () {
+								return self.__disableSend (false);
+							}));
+							self.authenticator.eventLogout.append ((function __lambda__ () {
+								return self.__disableSend (true);
+							}));
+						});},
+						get __disableSend () {return __get__ (this, function (self, v) {
+							self.$ ('button.send').attr ('disabled', v);
+						});},
+						get __toggleSending () {return __get__ (this, function (self, sending, userKey) {
+							self.$ ('.input').hide ();
+							self.$ ('.output').show ();
+							self.$ ('.output .sending').toggle (sending);
+							self.$ ('.output .sent').toggle (!(sending));
+							self.$ ('button.reset').attr ('disabled', sending);
+							if (userKey) {
+								self.$ ('.output .user-key').text (userKey);
+							}
+						});},
+						get __resetComposer () {return __get__ (this, function (self, keepInput) {
+							self.$ ('.output textarea').val ('');
+							if (!(keepInput)) {
+								self.$ ('.input textarea').val ('');
+							}
+							self.$ ('.input').show ();
+							self.$ ('.output').hide ();
+							self.$ ('.output .user-key').text ('');
+						});},
+						get __attachRandomKey () {return __get__ (this, function (self, content) {
+							var key = openpgp.util.hexidump (openpgp.crypto.random.getRandomBytes (16));
+							var content = 'Answer may be encrypted with:\n  {}\n\n{}'.format (key, content);
+							return tuple ([content, key]);
+						});},
+						get __encryptAndSend () {return __get__ (this, async function (self) {
+							self.$ ('.output textarea').val ('');
+							var cleartext = self.$ ('.input textarea').val ().strip ();
+							if (len (cleartext) < self.CLEARTEXT_MIN_LENGTH) {
+								alert ('Cleartext too short.');
+								return ;
+							}
+							var __left0__ = self.__attachRandomKey (cleartext);
+							var cleartext = __left0__ [0];
+							var userKey = __left0__ [1];
+							try {
+								var options = dict ({'data': cleartext, 'publicKeys': self.key});
+								var encrypted = await openpgp.encrypt (options);
+								var ciphertext = encrypted.data;
+								self.$ ('.output textarea').val (ciphertext);
+							}
+							catch (__except0__) {
+								return ;
+							}
+							self.__toggleSending (true, userKey);
+							try {
+								var newMessageRef = self.database.ref ('/private').push ();
+								await newMessageRef.set (dict ({'content': ciphertext, 'sender': self.authenticator.getCurrentUser ().uid, 'timestamp': firebase.database.ServerValue.TIMESTAMP, 'email': self.authenticator.getCurrentUser ().email || 'none'}));
+								self.__toggleSending (false);
+							}
+							catch (__except0__) {
+								alert ('Failed sending message. Is message too long?');
+								self.__resetComposer (true);
+							}
+						});}
+					});
+					__pragma__ ('<all>')
+						__all__.Composer = Composer;
+						__all__.__name__ = __name__;
+					__pragma__ ('</all>')
+				}
+			}
+		}
+	);
 	__nest__ (
 		__all__,
 		'main.displayer', {
@@ -2330,7 +2433,6 @@ function show_info () {
 							}
 							var updater = function (dbValue) {
 								var text = template.format (dbValue.val ());
-								console.log (path, text, targetAttr);
 								if (targetAttr) {
 									$ (domObj).attr (targetAttr, text);
 								}
@@ -2352,6 +2454,7 @@ function show_info () {
 			}
 		}
 	);
+
 	__nest__ (
 		__all__,
 		'main.util', {
@@ -2395,17 +2498,22 @@ function show_info () {
 		var __name__ = '__main__';
 		var AuthenticationArea = __init__ (__world__.main.authenticate).AuthenticationArea;
 		var Displayer = __init__ (__world__.main.displayer).Displayer;
+		var Composer = __init__ (__world__.main.composer).Composer;
+		openpgp.initWorker (dict ({'path': 'openpgp/openpgp.worker.min.js'}));
 		var main = function () {
 			var auth = AuthenticationArea ('#login');
 			var displayer = Displayer (auth);
+			var composer = Composer (auth, '#composer');
 		};
 		$ (main);
 		__pragma__ ('<use>' +
 			'main.authenticate' +
+			'main.composer' +
 			'main.displayer' +
 		'</use>')
 		__pragma__ ('<all>')
 			__all__.AuthenticationArea = AuthenticationArea;
+			__all__.Composer = Composer;
 			__all__.Displayer = Displayer;
 			__all__.__name__ = __name__;
 			__all__.main = main;

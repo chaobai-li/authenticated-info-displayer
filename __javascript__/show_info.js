@@ -1,5 +1,5 @@
 "use strict";
-// Transcrypt'ed from Python, 2018-03-02 01:02:42
+// Transcrypt'ed from Python, 2018-03-03 12:59:20
 function show_info () {
     var __symbols__ = ['__py3.6__', '__esv5__'];
     var __all__ = {};
@@ -2307,8 +2307,9 @@ function show_info () {
 							self.__initialize ();
 						});},
 						get __initialize () {return __get__ (this, function (self) {
-							var html = '\n            <div class="composer">\n                <div class="input">\n                    <div>Input anything you want to tell me.</div>\n                    <div><textarea></textarea></div>\n                    <div>\n                        <button class="send">Send</button>\n                        Make sure everything\'s correct -\n                        you will not see above input again!\n                    </div>\n                </div>\n                <div class="output">\n                    <div class="sending">Sending in progress...</div>\n                    <div class="sent">Sent!</div>\n                    <div>\n                        Take note of the key below!\n                        <pre class="user-key"></pre>\n                        Answer will be encrypted with this key!\n                    </div>\n                    <div><textarea readonly></textarea></div>\n                    <div>\n                        <button class="reset">Reset</button>\n                    </div>\n                </div>\n            </div>\n        ';
+							var html = '\n            <div class="composer">\n                <div class="input">\n                    <div>Input anything you want to tell me.</div>\n                    <div><textarea></textarea></div>\n                    <div>\n                        <button class="send">\n                            Encrypt And Send (Requires Login)\n                        </button>\n                        <button class="encrypt">\n                            Encrypt Only (No login, you have to send manually)\n                        </button>\n                        Make sure everything\'s correct -\n                        you will not see above input again!\n                    </div>\n                </div>\n                <div class="output">\n                    <div class="sending">Sending in progress...</div>\n                    <div class="sent">Done!</div>\n                    <div>\n                        Take note of the key below!\n                        <pre class="user-key"></pre>\n                        Answer will be encrypted with this key!\n                    </div>\n                    <div><textarea readonly></textarea></div>\n                    <div>\n                        <button class="reset">Reset</button>\n                    </div>\n                </div>\n            </div>\n        ';
 							self.$ ().html (html);
+							self.$ ('button.encrypt').click (self.__encryptOnly);
 							self.$ ('button.send').click (self.__encryptAndSend);
 							self.$ ('button.reset').click ((function __lambda__ () {
 								return self.__resetComposer (false);
@@ -2348,7 +2349,13 @@ function show_info () {
 							var content = 'Answer may be encrypted with:\n  {}\n\n{}'.format (key, content);
 							return tuple ([content, key]);
 						});},
+						get __encryptOnly () {return __get__ (this, async function (self) {
+							await self.__doEncryptAndSend (false);
+						});},
 						get __encryptAndSend () {return __get__ (this, async function (self) {
+							await self.__doEncryptAndSend (true);
+						});},
+						get __doEncryptAndSend () {return __get__ (this, async function (self, send) {
 							self.$ ('.output textarea').val ('');
 							var cleartext = self.$ ('.input textarea').val ().strip ();
 							if (len (cleartext) < self.CLEARTEXT_MIN_LENGTH) {
@@ -2365,6 +2372,10 @@ function show_info () {
 								self.$ ('.output textarea').val (ciphertext);
 							}
 							catch (__except0__) {
+								return ;
+							}
+							if (!(send)) {
+								self.__toggleSending (false, userKey);
 								return ;
 							}
 							self.__toggleSending (true, userKey);

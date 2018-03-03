@@ -19,14 +19,19 @@ class Composer:
                     <div>Input anything you want to tell me.</div>
                     <div><textarea></textarea></div>
                     <div>
-                        <button class="send">Send</button>
+                        <button class="send">
+                            Encrypt And Send (Requires Login)
+                        </button>
+                        <button class="encrypt">
+                            Encrypt Only (No login, you have to send manually)
+                        </button>
                         Make sure everything's correct -
                         you will not see above input again!
                     </div>
                 </div>
                 <div class="output">
                     <div class="sending">Sending in progress...</div>
-                    <div class="sent">Sent!</div>
+                    <div class="sent">Done!</div>
                     <div>
                         Take note of the key below!
                         <pre class="user-key"></pre>
@@ -40,6 +45,7 @@ class Composer:
             </div>
         """
         self.S().html(html)
+        self.S("button.encrypt").click(self.__encryptOnly)
         self.S("button.send").click(self.__encryptAndSend)
         self.S("button.reset").click(lambda: self.__resetComposer(False))
         self.__resetComposer(False)
@@ -76,7 +82,13 @@ class Composer:
         )
         return content, key
 
+    async def __encryptOnly(self):
+        await self.__doEncryptAndSend(False)
+
     async def __encryptAndSend(self):
+        await self.__doEncryptAndSend(True)
+
+    async def __doEncryptAndSend(self, send):
         self.S(".output textarea").val("")
 
         cleartext = self.S(".input textarea").val().strip()
@@ -95,6 +107,10 @@ class Composer:
             ciphertext = encrypted.data
             self.S(".output textarea").val(ciphertext)
         except:
+            return
+
+        if not send:
+            self.__toggleSending(False, userKey)
             return
 
         self.__toggleSending(True, userKey)
